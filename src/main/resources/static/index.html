@@ -26,7 +26,7 @@
       font-family: Arial, sans-serif;
       background: var(--bg-color);
       color: var(--text-color);
-      font-size: 17px; /* increased base font size */
+      font-size: 17px;
     }
 
     .container {
@@ -38,9 +38,8 @@
     }
 
     h1 {
-      margin: 10 10 10px 0;
-      font-size: 50px; /* increased */
-     
+      margin: 10px 0;
+      font-size: 50px;
     }
 
     .chat-body {
@@ -67,7 +66,7 @@
       background: var(--sidebar-bg);
       padding: 20px;
       border-radius: 8px;
-      font-size: 30px; /* increased */
+      font-size: 30px;
     }
 
     .chat-controls {
@@ -77,11 +76,18 @@
     }
 
     input[type="text"] {
-      flex: 1;
       padding: 12px;
       border: 1px solid #ccc;
       border-radius: 4px;
-      font-size: 30px; /* increased */
+      font-size: 30px;
+    }
+
+    #sender {
+      width: 200px;
+    }
+
+    #content {
+      flex: 1;
     }
 
     button {
@@ -92,7 +98,7 @@
       border-radius: 4px;
       cursor: pointer;
       transition: background 0.3s;
-      font-size: 30px; /* increased */
+      font-size: 30px;
     }
 
     button:hover {
@@ -106,7 +112,7 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      font-size: 18px; /* increased */
+      font-size: 30px;
     }
 
     .avatar {
@@ -128,11 +134,11 @@
 
     .sender {
       font-weight: bold;
-      font-size: 19px; /* increased */
+      font-size: 30px;
     }
 
     .timestamp {
-      font-size: 14px; /* increased */
+      font-size: 14px;
       color: gray;
       margin-top: 4px;
     }
@@ -150,7 +156,7 @@
       padding: 8px 14px;
       border-radius: 5px;
       cursor: pointer;
-      font-size:30px;
+      font-size: 30px;
     }
 
     .dark-toggle:hover {
@@ -170,26 +176,28 @@
       <div id="messages"></div>
       <div class="sidebar">
         <strong>Online Users</strong>
-        <ul style="margin-top: 10px;">
-          <li>Tanisha</li>
-          <li>Guest</li>
-        </ul>
+        <ul style="margin-top: 10px;"></ul>
       </div>
     </div>
 
     <div class="chat-controls">
-      <input type="text" id="sender" placeholder="Your name" />
-      <input type="text" id="content" placeholder="Type message..." />
-      <button onclick="sendMessage()">Send</button>
+      <input type="text" id="sender" placeholder="Your name" oninput="checkSender()" />
+      <input type="text" id="content" placeholder="Type message..." disabled />
+      <button id="sendBtn" onclick="sendMessage()" disabled>Send</button>
     </div>
   </div>
 
   <script>
+    let stompClient;
+    let isRegistered = false;
+
     const socket = new SockJS('/chat');
-    const stompClient = Stomp.over(socket);
+    stompClient = Stomp.over(socket);
 
     stompClient.connect({}, function (frame) {
       console.log('Connected: ' + frame);
+
+      // Subscribe to messages
       stompClient.subscribe('/topic/messages', function (messageOutput) {
         const msg = JSON.parse(messageOutput.body);
         const chatBox = document.getElementById('messages');
@@ -212,15 +220,47 @@
         chatBox.appendChild(div);
         chatBox.scrollTop = chatBox.scrollHeight;
       });
+
+      // Subscribe to user list
+      stompClient.subscribe('/topic/users', function (userListMsg) {
+        const users = JSON.parse(userListMsg.body);
+        const sidebar = document.querySelector('.sidebar ul');
+        sidebar.innerHTML = '';
+        users.forEach(user => {
+          const li = document.createElement('li');
+          li.textContent = user;
+          sidebar.appendChild(li);
+        });
+      });
     });
+
+    function checkSender() {
+      const sender = document.getElementById('sender').value.trim();
+      const contentInput = document.getElementById('content');
+      const sendBtn = document.getElementById('sendBtn');
+
+      if (sender) {
+        contentInput.disabled = false;
+        sendBtn.disabled = false;
+      } else {
+        contentInput.disabled = true;
+        sendBtn.disabled = true;
+      }
+    }
 
     function sendMessage() {
       const sender = document.getElementById('sender').value.trim();
       const content = document.getElementById('content').value.trim();
-      if (sender && content) {
-        stompClient.send("/app/send", {}, JSON.stringify({ sender, content }));
-        document.getElementById('content').value = '';
+
+      if (!sender || !content) return;
+
+      if (!isRegistered) {
+        stompClient.send("/app/register", {}, JSON.stringify({ sender }));
+        isRegistered = true;
       }
+
+      stompClient.send("/app/send", {}, JSON.stringify({ sender, content }));
+      document.getElementById('content').value = '';
     }
 
     function toggleDarkMode() {
