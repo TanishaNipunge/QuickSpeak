@@ -8,7 +8,7 @@ WORKDIR /app
 
 # Copy the jar file
 #COPY target/demo-0.0.1-SNAPSHOT.jar app.jar
-COPY ./target/demo-0.0.1-SNAPSHOT.jar app.jar
+COPY target/demo-0.0.1-SNAPSHOT.jar app.jar
 
 # Expose port (default Spring root port)
 EXPOSE 8080
