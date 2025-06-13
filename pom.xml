@@ -52,7 +52,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>3.5.0</version>
                 <configuration>
-                    <mainClass>com.example.demo.WebsocketChatApplication</mainClass>
+                    <mainClass>com.example.demo.ChatApplication</mainClass>
                 </configuration>
             </plugin>
         </plugins>
