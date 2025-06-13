@@ -18,22 +18,23 @@
 # Use OpenJDK 17 as the base image
 # Use OpenJDK 17 as the base image
 
+# Use OpenJDK 17 as the base image
 FROM openjdk:17-jdk-slim
 
-# Set the working directory
+# Set the working directory inside the container
 WORKDIR /app
 
-# Copy all files to the container
+# Copy the project files into the container
 COPY . .
 
 # Make mvnw executable
-RUN chmod +x ./mvnw
+RUN chmod +x mvnw
 
-# Build the project (skip tests to avoid errors)
+# Clean and build the application without tests
 RUN ./mvnw clean package -DskipTests
 
-# Expose port (default Spring Boot port)
+# Expose the Spring Boot default port
 EXPOSE 8080
 
-# Run the built JAR file
+# Run the JAR (replace with the correct name if different)
 ENTRYPOINT ["java", "-jar", "target/demo-0.0.1-SNAPSHOT.jar"]
